@@ -98,4 +98,85 @@ class Auth extends BaseController
 
         return redirect()->to($redirectUrl);
     }
+
+    /**
+     * POST /api/test-login
+     *
+     * Endpoint khusus development untuk testing via Postman.
+     * Logic identik dengan attemptLogin(), bedanya:
+     * - Menerima JSON body (bukan form POST + session)
+     * - Mengembalikan JSON (bukan redirect)
+     * - HANYA aktif di CI_ENVIRONMENT = development
+     */
+    public function testLogin()
+    {
+        // GUARD: hanya aktif di environment development
+        if (ENVIRONMENT !== 'development') {
+            return $this->response->setStatusCode(404)
+                ->setJSON(['error' => 'not_found']);
+        }
+
+        $json      = $this->request->getJSON(true);
+        $email     = $json['email'] ?? null;
+        $password  = $json['password'] ?? null;
+        $clientId  = $json['client_id'] ?? null;
+
+        // Validasi input
+        if (empty($email) || empty($password) || empty($clientId)) {
+            return $this->response->setStatusCode(400)
+                ->setJSON([
+                    'error'   => 'bad_request',
+                    'message' => 'Parameter email, password, dan client_id wajib diisi.',
+                ]);
+        }
+
+        // Validasi client_id
+        $applicationModel = new ApplicationModel();
+        $app = $applicationModel->where('client_id', $clientId)->first();
+
+        if (!$app) {
+            return $this->response->setStatusCode(400)
+                ->setJSON([
+                    'error'   => 'invalid_client',
+                    'message' => 'client_id tidak dikenali / tidak terdaftar.',
+                ]);
+        }
+
+        // Validasi kredensial
+        $userModel = new UserModel();
+        $user = $userModel->where('email', $email)->first();
+
+        if (!$user || !password_verify($password, $user['password_hash'])) {
+            return $this->response->setStatusCode(401)
+                ->setJSON([
+                    'error'   => 'invalid_credentials',
+                    'message' => 'Email atau password salah.',
+                ]);
+        }
+
+        // Generate JTI, access token, dan refresh token
+        $jti = Uuid::uuid4()->toString();
+
+        $accessToken = JwtHelper::generateAccessToken($user, $jti);
+
+        $refreshTokenPlain = bin2hex(random_bytes(32));
+        $refreshTokenHash  = hash('sha256', $refreshTokenPlain);
+
+        $refreshTokenModel = new RefreshTokenModel();
+        $refreshTokenModel->insert([
+            'id'             => Uuid::uuid4()->toString(),
+            'user_id'        => $user['id'],
+            'application_id' => $app['id'],
+            'jti'            => $jti,
+            'token_hash'     => $refreshTokenHash,
+            'expires_at'     => date('Y-m-d H:i:s', time() + (7 * 24 * 60 * 60)),
+            'revoked'        => 0,
+        ]);
+
+        return $this->response->setStatusCode(200)
+            ->setJSON([
+                'access_token'  => $accessToken,
+                'refresh_token' => $refreshTokenPlain,
+            ]);
+    }
 }
