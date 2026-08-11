@@ -55,11 +55,15 @@ class Auth extends BaseController
                 ->with('error', 'Sesi otorisasi tidak ditemukan atau kedaluwarsa. Ulangi proses login dari aplikasi asal.');
         }
 
-        $email    = $this->request->getPost('email');
+        $loginId  = $this->request->getPost('login_id');
         $password = $this->request->getPost('password');
 
         $userModel = new UserModel();
-        $user = $userModel->where('email', $email)->first();
+        $user = $userModel->groupStart()
+                          ->where('email', $loginId)
+                          ->orWhere('username', $loginId)
+                          ->groupEnd()
+                          ->first();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
             return redirect()->back()
