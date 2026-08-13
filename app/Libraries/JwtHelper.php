@@ -25,14 +25,19 @@ class JwtHelper
         $issuedAt  = time();
         $expiresAt = $issuedAt + (15 * 60); // 15 menit
 
+        // Cek apakah user adalah admin SSO
+        $db = \Config\Database::connect();
+        $isSsoAdmin = $db->table('sso_admins')->where('user_id', $user['id'])->countAllResults() > 0;
+
         $payload = [
-            'iss'      => 'sso-engine',
-            'sub'      => $user['id'],
-            'jti'      => $jti,
-            'email'    => $user['email'],
-            'username' => $user['username'],
-            'iat'      => $issuedAt,
-            'exp'      => $expiresAt,
+            'iss'          => 'sso-engine',
+            'sub'          => $user['id'],
+            'jti'          => $jti,
+            'email'        => $user['email'],
+            'username'     => $user['username'],
+            'is_sso_admin' => $isSsoAdmin,
+            'iat'          => $issuedAt,
+            'exp'          => $expiresAt,
         ];
 
         return JWT::encode($payload, self::getPrivateKey(), 'RS256');
