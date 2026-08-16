@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\ApplicationModel;
 use App\Models\UserModel;
 use App\Models\RefreshTokenModel;
+use App\Models\UserApplicationAccessModel;
 use App\Libraries\JwtHelper;
 use Ramsey\Uuid\Uuid;
 
@@ -34,16 +35,66 @@ class Auth extends BaseController
                 ->setBody('redirect_uri tidak cocok dengan yang terdaftar untuk client ini.');
         }
 
-        session()->set('oauth_context', [
+        $context = [
             'client_id'    => $clientId,
             'redirect_uri' => $redirectUri,
             'state'        => $state,
-        ]);
+        ];
+        
+        session()->set('oauth_context', $context);
+
+        // Jika user sudah login (sesi SSO aktif)
+        $ssoUserId = session()->get('sso_user_id');
+        if ($ssoUserId) {
+            $userModel = new UserModel();
+            $user = $userModel->find($ssoUserId);
+            
+            if ($user) {
+                // Cek akses aplikasi (Gerbang 1)
+                $accessModel = new UserApplicationAccessModel();
+                $access = $accessModel->where('user_id', $user['id'])
+                                      ->where('application_id', $app['id'])
+                                      ->where('revoked_at', null)
+                                      ->first();
+                                      
+                if (!$access) {
+                    return view('auth/error', [
+                        'message' => 'Anda belum memiliki akses ke aplikasi ini. Hubungi admin SSO.'
+                    ]);
+                }
+                
+                return $this->generateTokensAndRedirect($user, $app, $context);
+            }
+        }
 
         return view('auth/login', [
             'client_name' => $app['name'],
             'error'       => session()->getFlashdata('error'),
         ]);
+    }
+
+    public function logoutWeb()
+    {
+        session()->remove('sso_user_id');
+        
+        $redirectTo = $this->request->getGet('redirect_to');
+        if (!empty($redirectTo)) {
+            session()->remove('oauth_context');
+            return redirect()->to($redirectTo);
+        }
+
+        $context = session()->get('oauth_context');
+        if ($context) {
+            session()->remove('oauth_context');
+            $url = '/authorize?' . http_build_query([
+                'client_id'    => $context['client_id'],
+                'redirect_uri' => $context['redirect_uri'],
+                'state'        => $context['state'],
+            ]);
+            return redirect()->to($url);
+        }
+
+        return redirect()->to('/authorize-admin');
     }
 
     public function attemptLogin()
@@ -74,6 +125,27 @@ class Auth extends BaseController
         $applicationModel = new ApplicationModel();
         $app = $applicationModel->where('client_id', $context['client_id'])->first();
 
+        // Cek akses aplikasi (Gerbang 1)
+        $accessModel = new UserApplicationAccessModel();
+        $access = $accessModel->where('user_id', $user['id'])
+                              ->where('application_id', $app['id'])
+                              ->where('revoked_at', null)
+                              ->first();
+                              
+        if (!$access) {
+            return view('auth/error', [
+                'message' => 'Anda belum memiliki akses ke aplikasi ini. Hubungi admin SSO.'
+            ]);
+        }
+
+        // Set sesi aktif SSO
+        session()->set('sso_user_id', $user['id']);
+
+        return $this->generateTokensAndRedirect($user, $app, $context);
+    }
+    
+    private function generateTokensAndRedirect($user, $app, $context)
+    {
         $jti = Uuid::uuid4()->toString();
 
         $accessToken = JwtHelper::generateAccessToken($user, $jti);
@@ -157,6 +229,21 @@ class Auth extends BaseController
                     'message' => 'Email atau password salah.',
                 ]);
         }
+        
+        // Cek akses aplikasi (Gerbang 1)
+        $accessModel = new UserApplicationAccessModel();
+        $access = $accessModel->where('user_id', $user['id'])
+                              ->where('application_id', $app['id'])
+                              ->where('revoked_at', null)
+                              ->first();
+                              
+        if (!$access) {
+            return $this->response->setStatusCode(403)
+                ->setJSON([
+                    'error'   => 'application_access_denied',
+                    'message' => 'Anda belum memiliki akses ke aplikasi ini. Hubungi admin SSO.',
+                ]);
+        }
 
         // Generate JTI, access token, dan refresh token
         $jti = Uuid::uuid4()->toString();
@@ -183,4 +270,4 @@ class Auth extends BaseController
                 'refresh_token' => $refreshTokenPlain,
             ]);
     }
-}
+}

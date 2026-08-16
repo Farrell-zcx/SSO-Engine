@@ -13,14 +13,14 @@ class ApplicationSeeder extends Seeder
             [
                 'id'           => Uuid::uuid4()->toString(),
                 'name'         => 'MyMember',
-                'client_id'    => 'mymember-client',
+                'client_id'    => 'mymember-app',
                 'redirect_uri' => 'http://mymember.test/auth/callback',
             ],
             [
                 'id'           => Uuid::uuid4()->toString(),
                 'name'         => 'Inventory',
-                'client_id'    => 'inventory-client',
-                'redirect_uri' => 'http://inventory.test/auth/callback',
+                'client_id'    => 'inventory-app',
+                'redirect_uri' => 'http://inventory.test/callback',
             ],
         ];
 

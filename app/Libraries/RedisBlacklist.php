@@ -40,14 +40,12 @@ class RedisBlacklist
             $key = self::KEY_PREFIX . $jti;
             $this->redis->setex($key, $ttl, '1');
         } catch (\Exception $e) {
-            // Abaikan jika Redis mati (terutama untuk development)
             log_message('error', 'Redis connection failed: ' . $e->getMessage());
         }
     }
 
     /**
-     * Masukkan banyak JTI sekaligus (batch).
-     * Menggunakan pipeline untuk efisiensi 
+     * Masukkan banyak JTI sekaligus.
      * dalam satu round-trip ke Redis.
      */
     public function addMany(array $jtis, int $ttl = self::DEFAULT_TTL): void

@@ -100,6 +100,21 @@ class Sso extends BaseController
                 ]);
         }
 
+        // Cek akses aplikasi memastikan akses belum dicabut
+        $accessModel = new \App\Models\UserApplicationAccessModel();
+        $access = $accessModel->where('user_id', $user['id'])
+                              ->where('application_id', $app['id'])
+                              ->where('revoked_at', null)
+                              ->first();
+                              
+        if (!$access) {
+            return $this->response->setStatusCode(403)
+                ->setJSON([
+                    'error'   => 'application_access_denied',
+                    'message' => 'Anda tidak lagi memiliki akses ke aplikasi ini. Hubungi admin SSO.',
+                ]);
+        }
+
         // Rotate: generate refresh token baru, update row yang sama
         $newRefreshTokenPlain = bin2hex(random_bytes(32));
         $newRefreshTokenHash  = hash('sha256', $newRefreshTokenPlain);

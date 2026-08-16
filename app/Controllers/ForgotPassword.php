@@ -137,6 +137,28 @@ class ForgotPassword extends BaseController
             $userModel->update($user['id'], [
                 'password_hash' => password_hash($password, PASSWORD_BCRYPT)
             ]);
+            
+            // Revoke all refresh tokens
+            $refreshTokenModel = new \App\Models\RefreshTokenModel();
+            $activeTokens = $refreshTokenModel
+                ->where('user_id', $user['id'])
+                ->where('revoked', 0)
+                ->findAll();
+
+            $jtis = array_column($activeTokens, 'jti');
+            $activeIds = array_column($activeTokens, 'id');
+            
+            if (!empty($activeIds)) {
+                $refreshTokenModel
+                    ->whereIn('id', $activeIds)
+                    ->set(['revoked' => 1])
+                    ->update();
+            }
+
+            if (!empty($jtis)) {
+                $blacklist = new \App\Libraries\RedisBlacklist();
+                $blacklist->addMany($jtis);
+            }
         }
 
         // Hapus token
