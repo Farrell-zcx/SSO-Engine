@@ -8,15 +8,15 @@ class AuthAdminController extends BaseController
 {
     public function index()
     {
-        if (session()->get('sso_user_id')) {
+        if (session()->get('admin_user_id')) {
             $db = \Config\Database::connect();
-            $admin = $db->table('sso_admins')->where('user_id', session()->get('sso_user_id'))->get()->getRow();
+            $admin = $db->table('sso_admins')->where('user_id', session()->get('admin_user_id'))->get()->getRow();
             
             if ($admin) {
                 return redirect()->to('/admin/users');
             } else {
                 // Sesi saat ini bukan admin, hapus sesi agar tidak terjadi infinite loop
-                session()->remove('sso_user_id');
+                session()->remove('admin_user_id');
                 return redirect()->to('/authorize-admin')->with('error', 'Sesi Anda saat ini bukan admin. Silakan login dengan akun admin.');
             }
         }
@@ -50,13 +50,13 @@ class AuthAdminController extends BaseController
                 ->withInput();
         }
 
-        session()->set('sso_user_id', $user['id']);
+        session()->set('admin_user_id', $user['id']);
         return redirect()->to('/admin/users');
     }
 
     public function logout()
     {
-        session()->remove('sso_user_id');
+        session()->remove('admin_user_id');
         return redirect()->to('/authorize-admin');
     }
 }

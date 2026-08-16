@@ -100,7 +100,7 @@ class Sso extends BaseController
                 ]);
         }
 
-        // Cek akses aplikasi (Gerbang 1) - memastikan akses belum dicabut
+        // Cek akses aplikasi memastikan akses belum dicabut
         $accessModel = new \App\Models\UserApplicationAccessModel();
         $access = $accessModel->where('user_id', $user['id'])
                               ->where('application_id', $app['id'])

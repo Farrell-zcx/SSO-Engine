@@ -12,11 +12,11 @@ class SsoAdminFilter implements FilterInterface
     {
         $session = session();
 
-        if (!$session->get('sso_user_id')) {
+        if (!$session->get('admin_user_id')) {
             return redirect()->to('/authorize-admin')->with('error', 'Silakan login sebagai admin terlebih dahulu.');
         }
 
-        $userId = $session->get('sso_user_id');
+        $userId = $session->get('admin_user_id');
         $db = \Config\Database::connect();
 
         $admin = $db->table('sso_admins')->where('user_id', $userId)->get()->getRow();

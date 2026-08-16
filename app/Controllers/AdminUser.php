@@ -105,7 +105,7 @@ class AdminUser extends BaseController
     public function grantAccess($userId)
     {
         $appId = $this->request->getPost('application_id');
-        $adminId = session()->get('sso_user_id'); // get admin ID who is currently logged in
+        $adminId = session()->get('admin_user_id'); // get admin ID who is currently logged in
 
         $accessModel = new UserApplicationAccessModel();
         

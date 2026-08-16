@@ -56,7 +56,7 @@
             <h1 class="text-xl font-bold tracking-tight text-primary">SSO <span class="text-secondary">Admin</span></h1>
         </div>
         <div class="flex items-center gap-4">
-            <a href="<?= site_url('logout-web') ?>" class="flex items-center gap-2 text-on-surface-variant hover:text-error transition-colors text-sm font-medium">
+            <a href="<?= site_url('authorize-admin/logout') ?>" class="flex items-center gap-2 text-on-surface-variant hover:text-error transition-colors text-sm font-medium">
                 <span class="material-symbols-outlined text-[20px]">logout</span>
                 Logout
             </a>

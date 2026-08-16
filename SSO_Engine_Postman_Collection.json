@@ -12,7 +12,7 @@
 		},
 		{
 			"key": "client_id",
-			"value": "mymember-client",
+			"value": "mymember-app",
 			"type": "string"
 		},
 		{

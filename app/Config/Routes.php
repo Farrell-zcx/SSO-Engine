@@ -30,7 +30,7 @@ $routes->post('api/test-login', 'Auth::testLogin');
 // Admin Dashboard (Dilindungi middleware sso_admin)
 $routes->get('authorize-admin', 'AuthAdminController::index');
 $routes->post('authorize-admin/login', 'AuthAdminController::login');
-$routes->post('authorize-admin/logout', 'AuthAdminController::logout');
+$routes->get('authorize-admin/logout', 'AuthAdminController::logout');
 
 $routes->group('admin', ['filter' => 'sso_admin'], static function ($routes) {
     $routes->get('users', 'AdminUser::index');

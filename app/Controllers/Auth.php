@@ -77,19 +77,21 @@ class Auth extends BaseController
     {
         session()->remove('sso_user_id');
         
+        $redirectTo = $this->request->getGet('redirect_to');
+        if (!empty($redirectTo)) {
+            session()->remove('oauth_context');
+            return redirect()->to($redirectTo);
+        }
+
         $context = session()->get('oauth_context');
         if ($context) {
+            session()->remove('oauth_context');
             $url = '/authorize?' . http_build_query([
                 'client_id'    => $context['client_id'],
                 'redirect_uri' => $context['redirect_uri'],
                 'state'        => $context['state'],
             ]);
             return redirect()->to($url);
-        }
-
-        $redirectTo = $this->request->getGet('redirect_to');
-        if (!empty($redirectTo)) {
-            return redirect()->to($redirectTo);
         }
 
         return redirect()->to('/authorize-admin');
