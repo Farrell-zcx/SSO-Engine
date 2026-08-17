@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <link href="<?= base_url('css/liquidglass.css') ?>" rel="stylesheet" />
     <script id="tailwind-config">
         tailwind.config = {
@@ -72,7 +73,7 @@
 
         <!-- Alerts -->
         <?php if (session()->getFlashdata('message')): ?>
-            <div class="mb-6 p-4 bg-success-container text-on-success-container border border-green-200 rounded-lg flex items-start gap-3 shadow-sm animate-fade-in">
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition.duration.500ms class="mb-6 p-4 bg-success-container text-on-success-container border border-green-200 rounded-lg flex items-start gap-3 shadow-sm animate-fade-in">
                 <span class="material-symbols-outlined text-[20px] flex-shrink-0">check_circle</span>
                 <div class="flex-grow text-sm font-medium">
                     <?= session()->getFlashdata('message') ?>
@@ -163,3 +164,4 @@
     </main>
 </body>
 </html>
+

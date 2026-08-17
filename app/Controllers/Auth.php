@@ -50,7 +50,7 @@ class Auth extends BaseController
             $user = $userModel->find($ssoUserId);
             
             if ($user) {
-                // Cek akses aplikasi (Gerbang 1)
+                // Cek akses aplikasi
                 $accessModel = new UserApplicationAccessModel();
                 $access = $accessModel->where('user_id', $user['id'])
                                       ->where('application_id', $app['id'])
@@ -270,4 +270,4 @@ class Auth extends BaseController
                 'refresh_token' => $refreshTokenPlain,
             ]);
     }
-}
+}
