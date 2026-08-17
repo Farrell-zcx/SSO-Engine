@@ -125,7 +125,7 @@ class Auth extends BaseController
         $applicationModel = new ApplicationModel();
         $app = $applicationModel->where('client_id', $context['client_id'])->first();
 
-        // Cek akses aplikasi (Gerbang 1)
+        // Cek akses aplikasi
         $accessModel = new UserApplicationAccessModel();
         $access = $accessModel->where('user_id', $user['id'])
                               ->where('application_id', $app['id'])
