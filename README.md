@@ -167,6 +167,163 @@ Begitu JWT berhasil divalidasi di callback, Client App memeriksa tabel lokal:
 - **MyMember (Single Role):** Cek apakah user ada di tabel `admin`. Jika belum, buatkan akun lokal secara otomatis menggunakan data dari claims (`sub`, `email`, `username`).
 - **Inventory (Multi-Role):** Cek tabel `pending_role_assignments` untuk email user tersebut. Jika Admin Inventory sudah menyiapkan rolenya (`admin` / `staff`), buatkan user lokal dengan role tersebut.
 
+### 4. Implementasi Single Logout (SLO) di Client App
+Untuk memastikan *Single Logout* terkoordinasi antar aplikasi dengan akun yang sama:
+1. Client App memanggil API `POST /logout` ke SSO Engine dengan payload `{ "refresh_token": "..." }`.
+2. Client App menghapus sesi lokal (`session()->destroy()`).
+3. Client App mengarahkan browser user ke `GET /logout-web?redirect_to=<url_login_client>` agar sesi SSO di browser juga dibersihkan.
+
+Contoh Controller Logout di Client App (CodeIgniter 4):
+```php
+public function logout()
+{
+    $refreshToken = session()->get('refresh_token');
+
+    // 1. Panggil API SSO Engine /logout
+    if (!empty($refreshToken)) {
+        try {
+            $client = \Config\Services::curlrequest([
+                'base_uri'    => env('SSO_BASE_URL', 'http://sso-engine.test'),
+                'timeout'     => 5,
+                'http_errors' => false,
+            ]);
+
+            $client->post('/logout', [
+                'json' => [
+                    'refresh_token' => $refreshToken,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Gagal memanggil SSO logout: ' . $e->getMessage());
+        }
+    }
+
+    // 2. Bersihkan sesi lokal
+    session()->destroy();
+
+    // 3. Redirect ke SSO logout-web untuk membersihkan sesi SSO browser
+    $clientLoginUrl = site_url('login');
+    $ssoLogoutUrl   = rtrim(env('SSO_BASE_URL', 'http://sso-engine.test'), '/') . '/logout-web?redirect_to=' . urlencode($clientLoginUrl);
+
+    return redirect()->to($ssoLogoutUrl);
+}
+```
+
+### 5. Implementasi Instant Real-time SLO di AuthFilter Client App (Opsi 2)
+Untuk mewujudkan **Single Logout Instan (0 Detik Delay)**, `AuthFilter` pada Client App (MyMember & Inventory) memverifikasi token JWT offline dan mengecek status `$jti` ke Redis Blacklist di setiap request:
+
+```php
+<?php
+
+namespace App\Filters;
+
+use CodeIgniter\Filters\FilterInterface;
+use CodeIgniter\HTTP\RequestInterface;
+use CodeIgniter\HTTP\ResponseInterface;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Predis\Client as PredisClient;
+
+class AuthFilter implements FilterInterface
+{
+    public function before(RequestInterface $request, $arguments = null)
+    {
+        $accessToken = session()->get('access_token');
+
+        if (empty($accessToken)) {
+            return redirect()->to(site_url('login'))->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        try {
+            // 1. Verifikasi Signature JWT secara Offline (Super Cepat)
+            $publicKey = file_get_contents(APPPATH . '../keys/sso_public.pem');
+            $decoded = JWT::decode($accessToken, new Key($publicKey, 'RS256'));
+
+            // 2. INSTANT SLO: Cek JTI ke Redis Blacklist (< 1ms)
+            if (!empty($decoded->jti)) {
+                if ($this->isTokenBlacklisted($decoded->jti)) {
+                    session()->destroy();
+                    return redirect()->to(site_url('login'))->with('error', 'Sesi Anda telah diakhiri dari aplikasi lain.');
+                }
+            }
+
+            // Simpan info user ke request
+            $request->user = $decoded;
+
+        } catch (\Firebase\JWT\ExpiredException $e) {
+            // Access Token expired (>15 menit) -> Lakukan Silent Refresh ke SSO Engine
+            return $this->handleSilentRefresh();
+        } catch (\Exception $e) {
+            session()->destroy();
+            return redirect()->to(site_url('login'))->with('error', 'Sesi tidak valid.');
+        }
+    }
+
+    private function isTokenBlacklisted(string $jti): bool
+    {
+        try {
+            $redis = new PredisClient([
+                'scheme'   => 'tcp',
+                'host'     => env('REDIS_HOST', '127.0.0.1'),
+                'port'     => (int) env('REDIS_PORT', 6379),
+                'password' => env('REDIS_PASSWORD', null) ?: null,
+                'timeout'  => 0.5, // Timeout 500ms agar aman dan tidak membebani request
+            ]);
+
+            return (bool) $redis->exists('sso_blacklist:jti:' . $jti);
+        } catch (\Exception $e) {
+            // Fallback aman jika server Redis tidak dapat dijangkau
+            log_message('warning', 'Redis Blacklist check skipped: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function handleSilentRefresh()
+    {
+        $refreshToken = session()->get('refresh_token');
+        if (empty($refreshToken)) {
+            session()->destroy();
+            return redirect()->to(site_url('login'));
+        }
+
+        try {
+            $client = \Config\Services::curlrequest([
+                'base_uri'    => env('SSO_BASE_URL', 'http://sso-engine.test'),
+                'timeout'     => 5,
+                'http_errors' => false,
+            ]);
+
+            $response = $client->post('/refresh-token', [
+                'json' => [
+                    'refresh_token' => $refreshToken,
+                    'client_id'     => env('SSO_CLIENT_ID'),
+                ]
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $data = json_decode($response->getBody(), true);
+                session()->set([
+                    'access_token'  => $data['access_token'],
+                    'refresh_token' => $data['refresh_token'],
+                ]);
+                return; // Lanjut ke halaman yang dituju
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Silent refresh error: ' . $e->getMessage());
+        }
+
+        // Jika refresh token gagal / revoked -> logout
+        session()->destroy();
+        return redirect()->to(site_url('login'))->with('error', 'Sesi login Anda telah berakhir.');
+    }
+
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
+    {
+        // No-op
+    }
+}
+```
+
 ---
 
 ## Instalasi & Konfigurasi Lokal

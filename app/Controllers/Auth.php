@@ -18,21 +18,24 @@ class Auth extends BaseController
         $state       = $this->request->getGet('state');
 
         if (empty($clientId) || empty($redirectUri) || empty($state)) {
-            return $this->response->setStatusCode(400)
-                ->setBody('Parameter client_id, redirect_uri, dan state wajib diisi.');
+            return view('auth/error', [
+                'message' => 'Parameter otorisasi tidak lengkap (client_id, redirect_uri, atau state kosong). Silakan buka login melalui aplikasi MyMember atau Inventory.'
+            ]);
         }
 
         $applicationModel = new ApplicationModel();
         $app = $applicationModel->where('client_id', $clientId)->first();
 
         if (!$app) {
-            return $this->response->setStatusCode(400)
-                ->setBody('client_id tidak dikenali / tidak terdaftar.');
+            return view('auth/error', [
+                'message' => 'Aplikasi tidak dikenali atau client_id tidak terdaftar di SSO Engine.'
+            ]);
         }
 
         if ($app['redirect_uri'] !== $redirectUri) {
-            return $this->response->setStatusCode(400)
-                ->setBody('redirect_uri tidak cocok dengan yang terdaftar untuk client ini.');
+            return view('auth/error', [
+                'message' => 'URL callback (redirect_uri) tidak cocok dengan konfigurasi aplikasi ini.'
+            ]);
         }
 
         $context = [

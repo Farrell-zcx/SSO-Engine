@@ -191,6 +191,28 @@ class AdminUser extends BaseController
             ]);
         }
 
+        // Revoke seluruh refresh token aktif untuk user & aplikasi ini
+        $refreshTokenModel = new \App\Models\RefreshTokenModel();
+        $activeTokens = $refreshTokenModel
+            ->where('user_id', $userId)
+            ->where('application_id', $appId)
+            ->where('revoked', 0)
+            ->findAll();
+
+        if (!empty($activeTokens)) {
+            $jtis = array_column($activeTokens, 'jti');
+            $activeIds = array_column($activeTokens, 'id');
+
+            $refreshTokenModel
+                ->whereIn('id', $activeIds)
+                ->set(['revoked' => 1])
+                ->update();
+
+            // Masukkan JTI ke Redis Blacklist agar sesi langsung invalid seketika
+            $blacklist = new \App\Libraries\RedisBlacklist();
+            $blacklist->addMany($jtis);
+        }
+
         return redirect()->to("/admin/users/{$userId}/access")->with('message', 'Akses aplikasi berhasil dicabut.');
     }
 }
