@@ -8,9 +8,7 @@ $routes->get('/', 'Home::index');
 $routes->get('authorize', 'Auth::authorize');
 $routes->post('login', 'Auth::attemptLogin');
 
-// Register
-$routes->get('register', 'Register::index');
-$routes->post('register/process', 'Register::process');
+
 
 // Forgot & Reset Password
 $routes->get('forgot-password', 'ForgotPassword::index');

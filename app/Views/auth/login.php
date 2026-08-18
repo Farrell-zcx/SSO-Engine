@@ -141,7 +141,7 @@
 
                 <div class="mt-lg text-center">
                     <p class="font-body-sm text-body-sm text-on-surface-variant">
-                        Belum punya akun? <a class="text-secondary font-semibold hover:underline" href="<?= site_url('register') ?>">Daftar di sini</a>
+                        Belum punya akun? <span class="font-semibold text-on-surface">Hubungi Admin SSO Pusat</span>
                     </p>
                 </div>
             </div>
