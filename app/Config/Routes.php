@@ -6,6 +6,8 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 $routes->get('authorize', 'Auth::authorize');
+$routes->post('authorize/continue', 'Auth::continueAsUser');
+$routes->get('authorize/switch', 'Auth::switchAccount');
 $routes->post('login', 'Auth::attemptLogin');
 
 

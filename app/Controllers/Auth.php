@@ -46,7 +46,7 @@ class Auth extends BaseController
         
         session()->set('oauth_context', $context);
 
-        // Jika user sudah login (sesi SSO aktif)
+        // Jika user sudah login (sesi SSO aktif) -> Tampilkan layar konfirmasi / ganti akun
         $ssoUserId = session()->get('sso_user_id');
         if ($ssoUserId) {
             $userModel = new UserModel();
@@ -62,11 +62,14 @@ class Auth extends BaseController
                                       
                 if (!$access) {
                     return view('auth/error', [
-                        'message' => 'Anda belum memiliki akses ke aplikasi ini. Hubungi admin SSO.'
+                        'message' => 'Akun ' . esc($user['username']) . ' (' . esc($user['email']) . ') belum memiliki akses ke aplikasi ' . esc($app['name']) . '. Hubungi admin SSO.'
                     ]);
                 }
                 
-                return $this->generateTokensAndRedirect($user, $app, $context);
+                return view('auth/continue', [
+                    'client_name' => $app['name'],
+                    'user'        => $user,
+                ]);
             }
         }
 
@@ -74,6 +77,75 @@ class Auth extends BaseController
             'client_name' => $app['name'],
             'error'       => session()->getFlashdata('error'),
         ]);
+    }
+
+    /**
+     * Konfirmasi login dengan sesi user yang sedang aktif.
+     */
+    public function continueAsUser()
+    {
+        $context = session()->get('oauth_context');
+
+        if (!$context) {
+            return redirect()->to('/authorize')
+                ->with('error', 'Sesi otorisasi tidak ditemukan atau kedaluwarsa. Ulangi proses login dari aplikasi asal.');
+        }
+
+        $ssoUserId = session()->get('sso_user_id');
+        if (!$ssoUserId) {
+            return redirect()->to('/authorize');
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->find($ssoUserId);
+        if (!$user) {
+            session()->remove('sso_user_id');
+            return redirect()->to('/authorize');
+        }
+
+        $applicationModel = new ApplicationModel();
+        $app = $applicationModel->where('client_id', $context['client_id'])->first();
+
+        if (!$app) {
+            return view('auth/error', [
+                'message' => 'Aplikasi tidak dikenali.'
+            ]);
+        }
+
+        // Cek akses aplikasi
+        $accessModel = new UserApplicationAccessModel();
+        $access = $accessModel->where('user_id', $user['id'])
+                              ->where('application_id', $app['id'])
+                              ->where('revoked_at', null)
+                              ->first();
+
+        if (!$access) {
+            return view('auth/error', [
+                'message' => 'Anda belum memiliki akses ke aplikasi ini. Hubungi admin SSO.'
+            ]);
+        }
+
+        return $this->generateTokensAndRedirect($user, $app, $context);
+    }
+
+    /**
+     * Ganti akun: menghapus sesi SSO aktif saat ini dan menampilkan form login.
+     */
+    public function switchAccount()
+    {
+        session()->remove('sso_user_id');
+
+        $context = session()->get('oauth_context');
+        if ($context) {
+            $url = '/authorize?' . http_build_query([
+                'client_id'    => $context['client_id'],
+                'redirect_uri' => $context['redirect_uri'],
+                'state'        => $context['state'],
+            ]);
+            return redirect()->to($url);
+        }
+
+        return redirect()->to('/authorize');
     }
 
     public function logoutWeb()
