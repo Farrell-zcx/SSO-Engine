@@ -72,8 +72,8 @@ class ForgotPassword extends BaseController
 
     public function reset()
     {
-        $token = $this->request->getGet('token');
-        $email = $this->request->getGet('email');
+        $token = (string) $this->request->getGet('token');
+        $email = (string) $this->request->getGet('email');
 
         if (empty($token) || empty($email)) {
             return view('auth/reset_error', ['message' => 'Link reset password tidak valid.']);
@@ -113,9 +113,9 @@ class ForgotPassword extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $email = $this->request->getPost('email');
-        $token = $this->request->getPost('token');
-        $password = $this->request->getPost('password');
+        $email = (string) $this->request->getPost('email');
+        $token = (string) $this->request->getPost('token');
+        $password = (string) $this->request->getPost('password');
 
         $db = \Config\Database::connect();
         $resetRecord = $db->table('password_resets')->where('email', $email)->get()->getRowArray();

@@ -1,3 +1,8 @@
+<?php
+/**
+ * @var string|null $message
+ */
+?>
 <!DOCTYPE html>
 <html class="light" lang="id">
 

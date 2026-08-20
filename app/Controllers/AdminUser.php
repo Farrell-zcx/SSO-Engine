@@ -19,8 +19,8 @@ class AdminUser extends BaseController
 
     public function store()
     {
-        $email = $this->request->getPost('email');
-        $username = $this->request->getPost('username');
+        $email = (string) $this->request->getPost('email');
+        $username = (string) $this->request->getPost('username');
         
         // Validasi dihapus agar bebas menggunakan email domain apapun
         
@@ -32,7 +32,7 @@ class AdminUser extends BaseController
             return redirect()->back()->with('error', 'Username sudah terdaftar')->withInput();
         }
 
-        // Generate password reset token via ForgotPassword logic (simulasi aktivasi)
+        // Generate password reset token via ForgotPassword logic
         $userId = Uuid::uuid4()->toString();
         $userModel->insert([
             'id' => $userId,
@@ -75,7 +75,7 @@ class AdminUser extends BaseController
         }
     }
 
-    public function access($userId)
+    public function access(string $userId)
     {
         $userModel = new UserModel();
         $user = $userModel->find($userId);
@@ -102,9 +102,9 @@ class AdminUser extends BaseController
         ]);
     }
 
-    public function grantAccess($userId)
+    public function grantAccess(string $userId)
     {
-        $appId = $this->request->getPost('application_id');
+        $appId = (string) $this->request->getPost('application_id');
         $adminId = session()->get('admin_user_id'); // get admin ID who is currently logged in
 
         $accessModel = new UserApplicationAccessModel();
@@ -135,7 +135,7 @@ class AdminUser extends BaseController
         return redirect()->to("/admin/users/{$userId}/access")->with('message', 'Akses aplikasi berhasil diberikan.');
     }
 
-    public function delete($userId)
+    public function delete(string $userId)
     {
         $userModel = new UserModel();
         $user = $userModel->find($userId);
@@ -177,7 +177,7 @@ class AdminUser extends BaseController
         return redirect()->to('/admin/users')->with('message', 'User berhasil dihapus dari SSO Engine, MyMember, dan Inventory.');
     }
 
-    public function revokeAccess($userId, $appId)
+    public function revokeAccess(string $userId, string $appId)
     {
         $accessModel = new UserApplicationAccessModel();
         $existing = $accessModel->where('user_id', $userId)

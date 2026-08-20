@@ -1,3 +1,9 @@
+<?php
+/**
+ * @var string $token
+ * @var string $email
+ */
+?>
 <!DOCTYPE html>
 <html class="light" lang="id">
 
@@ -86,7 +92,10 @@
                             <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant group-focus-within:text-secondary transition-colors">
                                 <span class="material-symbols-outlined text-[20px]">lock</span>
                             </div>
-                            <input class="w-full h-[52px] pl-[48px] pr-md glass-input rounded-lg font-body-md text-body-md focus:outline-none transition-all outline-none" id="password" name="password" placeholder="Minimal 6 karakter" required type="password" />
+                            <input class="w-full h-[52px] pl-[48px] pr-[48px] glass-input rounded-lg font-body-md text-body-md focus:outline-none transition-all outline-none" id="password" name="password" placeholder="Minimal 6 karakter" required type="password" />
+                            <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute inset-y-0 right-0 pr-md flex items-center text-on-surface-variant hover:text-secondary focus:outline-none transition-colors cursor-pointer" tabindex="-1" aria-label="Toggle password visibility">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
                         </div>
                     </div>
 
@@ -96,7 +105,10 @@
                             <div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant group-focus-within:text-secondary transition-colors">
                                 <span class="material-symbols-outlined text-[20px]">lock_reset</span>
                             </div>
-                            <input class="w-full h-[52px] pl-[48px] pr-md glass-input rounded-lg font-body-md text-body-md focus:outline-none transition-all outline-none" id="password_confirm" name="password_confirm" placeholder="Ketik ulang password baru" required type="password" />
+                            <input class="w-full h-[52px] pl-[48px] pr-[48px] glass-input rounded-lg font-body-md text-body-md focus:outline-none transition-all outline-none" id="password_confirm" name="password_confirm" placeholder="Ketik ulang password baru" required type="password" />
+                            <button type="button" onclick="togglePasswordVisibility('password_confirm', this)" class="absolute inset-y-0 right-0 pr-md flex items-center text-on-surface-variant hover:text-secondary focus:outline-none transition-colors cursor-pointer" tabindex="-1" aria-label="Toggle password visibility">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
                         </div>
                     </div>
 
@@ -114,5 +126,21 @@
             © <?= date('Y') ?> SSO Engine.
         </p>
     </footer>
+
+    <script>
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        }
+    </script>
 </body>
 </html>

@@ -219,7 +219,12 @@ class Auth extends BaseController
         return $this->generateTokensAndRedirect($user, $app, $context);
     }
     
-    private function generateTokensAndRedirect($user, $app, $context)
+    /**
+     * @param array<string, mixed> $user
+     * @param array<string, mixed> $app
+     * @param array<string, mixed> $context
+     */
+    private function generateTokensAndRedirect(array $user, array $app, array $context)
     {
         $jti = Uuid::uuid4()->toString();
 
@@ -253,7 +258,6 @@ class Auth extends BaseController
     /**
      * POST /api/test-login
      *
-     * Endpoint khusus development untuk testing via Postman.
      * Logic identik dengan attemptLogin(), bedanya:
      * - Menerima JSON body (bukan form POST + session)
      * - Mengembalikan JSON (bukan redirect)
