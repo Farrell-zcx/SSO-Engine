@@ -36,11 +36,9 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/html/writable \
     && chmod -R 775 /var/www/html/writable
 
-# Pastikan folder keys (JWT RS256) punya permission yang benar
-RUN if [ -d /var/www/html/keys ]; then \
-    chmod 600 /var/www/html/keys/private.pem && \
-    chmod 644 /var/www/html/keys/public.pem; \
-    fi
+# Pastikan file keys (JWT RS256) punya permission yang benar jika ada
+RUN if [ -f /var/www/html/keys/private.pem ]; then chmod 600 /var/www/html/keys/private.pem; fi && \
+    if [ -f /var/www/html/keys/public.pem ]; then chmod 644 /var/www/html/keys/public.pem; fi
 
 # Konfigurasi Apache: DocumentRoot ke folder public CI4
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
