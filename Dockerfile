@@ -1,7 +1,7 @@
 # ============================================
 # SSO Engine - PHP Backend (CodeIgniter 4)
 # ============================================
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Install PHP extensions yang dibutuhkan CI4 + Redis
 RUN apt-get update && apt-get install -y \
