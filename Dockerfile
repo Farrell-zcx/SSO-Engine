@@ -9,11 +9,12 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    libicu-dev \
     unzip \
     git \
     curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mysqli pdo pdo_mysql zip intl \
+    && docker-php-ext-install gd mysqli pdo_mysql zip intl \
     && a2enmod rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
