@@ -45,7 +45,7 @@ class Sso extends BaseController
     public function refreshToken()
     {
         $json = $this->request->getJSON(true);
-        $refreshTokenPlain = $json['refresh_token'] ?? null;
+        $refreshTokenPlain = $json['refresh_token'] ?? $this->request->getVar('refresh_token');
         $clientId          = $json['client_id'] ?? null;
 
         // Validasi input
@@ -144,7 +144,7 @@ class Sso extends BaseController
     public function logout()
     {
         $json = $this->request->getJSON(true);
-        $refreshTokenPlain = $json['refresh_token'] ?? null;
+        $refreshTokenPlain = $json['refresh_token'] ?? $this->request->getVar('refresh_token');
 
         // Validasi input
         if (empty($refreshTokenPlain)) {
