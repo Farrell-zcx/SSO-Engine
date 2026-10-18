@@ -62,7 +62,8 @@ class AdminUser extends BaseController
         ]);
 
         $emailService = \Config\Services::email();
-        $emailService->setFrom('noreply@sso-engine.test', 'SSO Engine');
+        $fromEmail = config('Email')->fromEmail ?: (getenv('SMTP_USER') ?: 'noreply@domain.com');
+        $emailService->setFrom($fromEmail, 'SSO Engine');
         $emailService->setTo($email);
         $emailService->setSubject('Aktivasi Akun SSO Engine');
         $emailService->setMessage($emailMessage);
