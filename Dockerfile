@@ -1,7 +1,7 @@
 # ============================================
 # SSO Engine - PHP Backend (CodeIgniter 4)
 # ============================================
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 # Install PHP extensions yang dibutuhkan CI4 + Redis
 RUN apt-get update && apt-get install -y \
@@ -9,11 +9,12 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    libicu-dev \
     unzip \
     git \
     curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mysqli pdo pdo_mysql zip intl \
+    && docker-php-ext-install gd mysqli pdo_mysql zip intl \
     && a2enmod rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -36,8 +37,9 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/html/writable \
     && chmod -R 775 /var/www/html/writable
 
-# Pastikan file keys (JWT RS256) punya permission yang benar jika ada
-RUN if [ -f /var/www/html/keys/private.pem ]; then chmod 600 /var/www/html/keys/private.pem; fi && \
+# Pastikan file keys (JWT RS256) punya permission dan owner yang benar jika ada
+RUN if [ -d /var/www/html/keys ]; then chown -R www-data:www-data /var/www/html/keys; fi && \
+    if [ -f /var/www/html/keys/private.pem ]; then chmod 600 /var/www/html/keys/private.pem; fi && \
     if [ -f /var/www/html/keys/public.pem ]; then chmod 644 /var/www/html/keys/public.pem; fi
 
 # Konfigurasi Apache: DocumentRoot ke folder public CI4

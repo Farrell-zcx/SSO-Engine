@@ -14,7 +14,7 @@ class ApplicationSeeder extends Seeder
                 'id'           => Uuid::uuid4()->toString(),
                 'name'         => 'MyMember',
                 'client_id'    => 'mymember-app',
-                'redirect_uri' => 'http://mymember.test/auth/callback',
+                'redirect_uri' => env('MYMEMBER_SSO_REDIRECT', 'http://mymember.localhost/auth/callback'),
             ],
             [
                 'id'           => Uuid::uuid4()->toString(),
