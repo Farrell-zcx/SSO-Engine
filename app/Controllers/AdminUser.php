@@ -61,12 +61,16 @@ class AdminUser extends BaseController
             'activationLink' => $resetLink
         ]);
 
+        $altMessage = "Halo {$username},\n\nAkun SSO Anda telah berhasil dibuat oleh Administrator. Silakan buka tautan berikut untuk mengaktifkan akun dan mengatur password Anda:\n\n{$resetLink}\n\nLink aktivasi ini hanya berlaku selama 10 menit.\n\nSalam,\nSSO Engine System";
+
         $emailService = \Config\Services::email();
         $fromEmail = config('Email')->fromEmail ?: (getenv('SMTP_USER') ?: 'noreply@domain.com');
-        $emailService->setFrom($fromEmail, 'SSO Engine');
+        $fromName  = 'Farrel Labib - SSO Portal';
+        $emailService->setFrom($fromEmail, $fromName);
         $emailService->setTo($email);
-        $emailService->setSubject('Aktivasi Akun SSO Engine');
+        $emailService->setSubject('[SSO Engine] Aktivasi Akun Anda');
         $emailService->setMessage($emailMessage);
+        $emailService->setAltMessage($altMessage);
 
         if ($emailService->send()) {
             return redirect()->to('/admin/users')->with('message', 'User berhasil ditambahkan dan email aktivasi telah dikirim ke ' . esc($email));

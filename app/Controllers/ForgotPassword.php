@@ -56,12 +56,16 @@ class ForgotPassword extends BaseController
             'resetLink' => $resetLink
         ]);
 
+        $altMessage = "Halo {$user['username']},\n\nKami menerima permintaan untuk mereset password akun SSO Anda. Silakan buka tautan berikut untuk membuat password baru:\n\n{$resetLink}\n\nLink ini hanya berlaku selama 10 menit.\nJika Anda tidak pernah meminta reset password, abaikan email ini.\n\nSalam,\nSSO Engine System";
+
         $emailService = \Config\Services::email();
         $fromEmail = config('Email')->fromEmail ?: (getenv('SMTP_USER') ?: 'noreply@domain.com');
-        $emailService->setFrom($fromEmail, 'SSO Engine');
+        $fromName  = 'Farrel Labib - SSO Portal';
+        $emailService->setFrom($fromEmail, $fromName);
         $emailService->setTo($email);
-        $emailService->setSubject('Reset Password SSO Engine');
+        $emailService->setSubject('[SSO Engine] Permintaan Reset Password Akun');
         $emailService->setMessage($emailMessage);
+        $emailService->setAltMessage($altMessage);
 
         if ($emailService->send()) {
             return redirect()->back()->with('success', 'Link reset password telah dikirim ke email Anda.');
