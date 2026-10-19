@@ -123,4 +123,26 @@ class Email extends BaseConfig
      * Enable notify message from server
      */
     public bool $DSN = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Support standard POSIX environment variables for Docker
+        $this->protocol   = getenv('SMTP_PROTOCOL') ?: getenv('email.protocol') ?: getenv('email_protocol') ?: 'smtp';
+        $this->SMTPHost   = getenv('SMTP_HOST') ?: getenv('email.SMTPHost') ?: getenv('email_SMTPHost') ?: 'smtp.gmail.com';
+        $this->SMTPUser   = getenv('SMTP_USER') ?: getenv('email.SMTPUser') ?: getenv('email_SMTPUser') ?: '';
+        $this->SMTPPass   = getenv('SMTP_PASS') ?: getenv('email.SMTPPass') ?: getenv('email_SMTPPass') ?: '';
+        $this->SMTPPort   = (int) (getenv('SMTP_PORT') ?: getenv('email.SMTPPort') ?: getenv('email_SMTPPort') ?: 587);
+        $this->SMTPCrypto = getenv('SMTP_CRYPTO') ?: getenv('email.SMTPCrypto') ?: getenv('email_SMTPCrypto') ?: 'tls';
+
+        // Anti-Spam: Pastikan fromEmail identik dengan SMTP_USER agar SPF/DKIM Gmail 100% Pass
+        $this->fromEmail  = getenv('SMTP_USER') ?: getenv('email.fromEmail') ?: getenv('email_fromEmail') ?: '';
+        $this->fromName   = getenv('SMTP_FROM_NAME') ?: getenv('email.fromName') ?: getenv('email_fromName') ?: 'Farrel Labib - SSO Portal';
+
+        $this->mailType   = getenv('SMTP_MAIL_TYPE') ?: getenv('email.mailType') ?: getenv('email_mailType') ?: 'html';
+        $this->userAgent  = ''; // Hapus jejak bot CodeIgniter agar tidak ditandai sebagai spam
+        $this->CRLF       = "\r\n";
+        $this->newline    = "\r\n";
+    }
 }
