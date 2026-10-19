@@ -163,10 +163,13 @@ class AdminUser extends BaseController
 
         // Hapus otomatis di database MyMember
         try {
+            $dbHost = getenv('DB_HOST') ?: (getenv('CI_ENVIRONMENT') === 'production' ? 'mysql' : '127.0.0.1');
+            $dbPass = getenv('DB_PASSWORD') ?: getenv('MYSQL_ROOT_PASSWORD') ?: '';
+
             $dbMymember = \Config\Database::connect([
-                'hostname' => '127.0.0.1',
-                'username' => 'root',
-                'password' => '',
+                'hostname' => $dbHost,
+                'username' => getenv('DB_USERNAME') ?: 'root',
+                'password' => $dbPass,
                 'database' => 'mymember_db',
                 'DBDriver' => 'MySQLi'
             ], false); // set false to not use default connection config
@@ -177,10 +180,13 @@ class AdminUser extends BaseController
 
         // Hapus otomatis di database Inventory
         try {
+            $dbHost = getenv('DB_HOST') ?: (getenv('CI_ENVIRONMENT') === 'production' ? 'mysql' : '127.0.0.1');
+            $dbPass = getenv('DB_PASSWORD') ?: getenv('MYSQL_ROOT_PASSWORD') ?: '';
+
             $dbInventory = \Config\Database::connect([
-                'hostname' => '127.0.0.1',
-                'username' => 'root',
-                'password' => '',
+                'hostname' => $dbHost,
+                'username' => getenv('DB_USERNAME') ?: 'root',
+                'password' => $dbPass,
                 'database' => 'inventory_sso',
                 'DBDriver' => 'MySQLi'
             ], false);

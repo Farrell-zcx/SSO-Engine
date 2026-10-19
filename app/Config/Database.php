@@ -194,6 +194,38 @@ class Database extends Config
     {
         parent::__construct();
 
+        // Support standard POSIX environment variables (without dots) for Docker
+        $host = getenv('DB_HOST') ?: getenv('MYSQL_HOST') ?: getenv('database.default.hostname') ?: getenv('database_default_hostname');
+        if ($host) {
+            $this->default['hostname'] = $host;
+        } elseif ($this->default['hostname'] === 'localhost' && getenv('CI_ENVIRONMENT') === 'production') {
+            $this->default['hostname'] = 'mysql';
+        }
+
+        $database = getenv('DB_DATABASE') ?: getenv('MYSQL_DATABASE') ?: getenv('database.default.database') ?: getenv('database_default_database');
+        if ($database) {
+            $this->default['database'] = $database;
+        } elseif (empty($this->default['database'])) {
+            $this->default['database'] = 'sso_engine';
+        }
+
+        $username = getenv('DB_USERNAME') ?: getenv('MYSQL_USER') ?: getenv('database.default.username') ?: getenv('database_default_username');
+        if ($username) {
+            $this->default['username'] = $username;
+        } elseif (empty($this->default['username'])) {
+            $this->default['username'] = 'root';
+        }
+
+        $password = getenv('DB_PASSWORD') ?: getenv('MYSQL_ROOT_PASSWORD') ?: getenv('database.default.password') ?: getenv('database_default_password');
+        if ($password !== false && $password !== null && $password !== '') {
+            $this->default['password'] = $password;
+        }
+
+        $driver = getenv('DB_DRIVER') ?: getenv('database.default.DBDriver') ?: getenv('database_default_DBDriver');
+        if ($driver) {
+            $this->default['DBDriver'] = $driver;
+        }
+
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
         // we don't overwrite live data on accident.

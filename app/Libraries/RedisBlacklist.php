@@ -22,12 +22,17 @@ class RedisBlacklist
 
     public function __construct()
     {
+        $host = getenv('REDIS_HOST') ?: env('redis.host', 'redis');
+        $port = (int) (getenv('REDIS_PORT') ?: env('redis.port', 6379));
+        $pass = getenv('REDIS_PASSWORD') ?: env('redis.password', null) ?: null;
+        $db   = (int) (getenv('REDIS_DATABASE') ?: env('redis.database', 0));
+
         $this->redis = new PredisClient([
             'scheme'   => 'tcp',
-            'host'     => env('redis.host', '127.0.0.1'),
-            'port'     => (int) env('redis.port', 6379),
-            'password' => env('redis.password', null) ?: null,
-            'database' => (int) env('redis.database', 0),
+            'host'     => $host,
+            'port'     => $port,
+            'password' => $pass,
+            'database' => $db,
         ]);
     }
 
