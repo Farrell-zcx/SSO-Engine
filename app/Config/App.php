@@ -18,6 +18,17 @@ class App extends BaseConfig
      */
     public string $baseURL = 'http://localhost:8080/';
 
+    public function __construct()
+    {
+        parent::__construct();
+
+        if ($env = getenv('SSO_BASE_URL')) {
+            $this->baseURL = rtrim($env, '/') . '/';
+        } elseif ($env = getenv('app.baseURL')) {
+            $this->baseURL = rtrim($env, '/') . '/';
+        }
+    }
+
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
      * If you want to accept multiple Hostnames, set this.
