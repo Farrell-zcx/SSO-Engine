@@ -39,7 +39,7 @@
                                 Atau, salin dan tempel tautan berikut di browser Anda:
                             </p>
                             <p style="font-size: 13px; color: #2563eb; word-break: break-all; margin-top: 0; background-color: #f3f4f6; padding: 10px; border-radius: 4px;">
-                                <?= esc($activationLink) ?>
+                                <a href="<?= esc($activationLink) ?>" style="color: #2563eb; text-decoration: underline; word-break: break-all;"><?= esc($activationLink) ?></a>
                             </p>
                             
                             <p style="font-size: 14px; color: #dc2626; margin-top: 30px; font-weight: 500;">

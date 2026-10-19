@@ -78,14 +78,18 @@ class ForgotPassword extends BaseController
     public function reset()
     {
         $token = (string) $this->request->getGet('token');
-        $email = (string) $this->request->getGet('email');
+        $email = (string) ($this->request->getGet('email') ?: $this->request->getGet('amp;email'));
 
         if (empty($token) || empty($email)) {
             return view('auth/reset_error', ['message' => 'Link reset password tidak valid.']);
         }
 
         $db = \Config\Database::connect();
-        $resetRecord = $db->table('password_resets')->where('email', $email)->get()->getRowArray();
+        $resetRecord = $db->table('password_resets')
+            ->where('email', $email)
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->getRowArray();
 
         if (!$resetRecord) {
             return view('auth/reset_error', ['message' => 'Token reset password tidak ditemukan atau sudah kadaluarsa.']);
@@ -123,7 +127,11 @@ class ForgotPassword extends BaseController
         $password = (string) $this->request->getPost('password');
 
         $db = \Config\Database::connect();
-        $resetRecord = $db->table('password_resets')->where('email', $email)->get()->getRowArray();
+        $resetRecord = $db->table('password_resets')
+            ->where('email', $email)
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->getRowArray();
 
         if (!$resetRecord || !hash_equals($resetRecord['token'], hash('sha256', $token))) {
             return view('auth/reset_error', ['message' => 'Proses reset gagal. Link tidak valid.']);

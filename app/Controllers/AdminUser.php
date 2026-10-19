@@ -47,6 +47,8 @@ class AdminUser extends BaseController
         $resetTokenHash  = hash('sha256', $resetTokenPlain);
 
         $db = \Config\Database::connect();
+        // Hapus token lama jika ada agar tidak menumpuk
+        $db->table('password_resets')->where('email', $email)->delete();
         $db->table('password_resets')->insert([
             'email'      => $email,
             'token'      => $resetTokenHash,
@@ -150,6 +152,14 @@ class AdminUser extends BaseController
         }
 
         $userModel->delete($userId);
+
+        // Hapus pending token di password_resets jika ada
+        try {
+            $db = \Config\Database::connect();
+            $db->table('password_resets')->where('email', $user['email'])->delete();
+        } catch (\Exception $e) {
+            log_message('error', 'Gagal menghapus token di password_resets: ' . $e->getMessage());
+        }
 
         // Hapus otomatis di database MyMember
         try {
