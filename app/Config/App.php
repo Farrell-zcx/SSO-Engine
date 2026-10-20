@@ -49,7 +49,7 @@ class App extends BaseConfig
      *
      * @var list<string>
      */
-    public array $allowedHostnames = [];
+    public array $allowedHostnames = ['sso-engine', 'localhost', '127.0.0.1'];
 
     /**
      * --------------------------------------------------------------------------
